@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAssembly Example</title>
+</head>
+<body>
+    <h1>Factorial Calculation Using WebAssembly</h1>
+
+    <script>
+        // Función para cargar y ejecutar el módulo WebAssembly
+        async function runWebAssembly() {
+            // Cargar el módulo WebAssembly
+            const response = await fetch('a.out.wasm'); // Ajusta el nombre del archivo según tu configuración
+            const buffer = await response.arrayBuffer();
+            
+            // Definir funciones externas esperadas por el módulo
+            const imports = {
+                env: {
+                    memoryBase: 0,
+                    tableBase: 0,
+                    memory: new WebAssembly.Memory({ initial: 256, maximum: 256 }),
+                    table: new WebAssembly.Table({ initial: 0, maximum: 0, element: 'anyfunc' }),
+                    calculateFactorialJS: function (n) {
+                        // Lógica para calcular el factorial en JavaScript
+                        // Retorna el resultado
+                        if (n <= 1) {
+                            return 1;
+                        } else {
+                            return n * imports.env.calculateFactorialJS(n - 1);
+                        }
+                    }
+                }
+            };
+
+            // Instanciar el módulo WebAssembly con las funciones externas
+            const { instance } = await WebAssembly.instantiate(buffer, imports);
+
+            // Llamar a la función factorial definida en el módulo
+            const result = instance.exports.factorial(5); // Cambia el argumento según tus necesidades
+
+            // Mostrar el resultado en la consola
+            console.log('El factorial es:', result);
+        }
+
+        // Llamar a la función al cargar la página
+        runWebAssembly();
+    </script>
+</body>
+</html>
